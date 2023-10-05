@@ -77,9 +77,9 @@ src = "unicorespawner/_version.py"
 version_template = '({major}, {minor}, {patch}, "{pre}", "{dev}")'
 search = "version_info = {current_version}"
 
-[[tool.tbump.file]]
-src = "docs/source/_static/rest-api.yml"
-search = "version: {current_version}"
+#[[tool.tbump.file]]
+#src = "docs/source/_static/rest-api.yml"
+#search = "version: {current_version}"
 
 [tool.djlint]
 indent = 2
