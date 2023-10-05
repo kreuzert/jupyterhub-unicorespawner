@@ -24,6 +24,10 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[git]
+message_template = "Bump to {new_version}"
+tag_template = "{new_version}"
+
 [tool.hatch.build]
 artifacts = [
     "unicorespawner/templates/*"
