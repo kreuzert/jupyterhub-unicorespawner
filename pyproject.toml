@@ -73,7 +73,7 @@ src = "pyproject.toml"
 search = 'version = "{current_version}"'
 
 [[tool.tbump.file]]
-src = "jupyterhub-unicorespawner/_version.py"
+src = "unicorespawner/_version.py"
 version_template = '({major}, {minor}, {patch}, "{pre}", "{dev}")'
 search = "version_info = {current_version}"
 
