@@ -1,5 +1,3 @@
-[version]
-current = "0.0.1.dev0"
 
 [build-system]
 requires = ["hatchling"]
