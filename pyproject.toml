@@ -21,6 +21,7 @@ dependencies = [
     "jupyterhub>=4.0.0",
     "traitlets",
     "urllib3",
+    "jupyterhub-forwardbasespawner",
     "pyunicore"
 ]
 dynamic = ["version"]
