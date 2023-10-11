@@ -5,4 +5,4 @@
 #__version__ = ".".join(map(str, version_info[:3])) + ".".join(version_info[3:]).rstrip(
 #     "."
 # )
-__version__ = "0.0.1.dev1"
+__version__ = "0.0.1.dev2"
