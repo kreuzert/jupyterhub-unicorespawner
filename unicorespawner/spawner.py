@@ -13,7 +13,7 @@ from traitlets import Dict
 from traitlets import Integer
 from traitlets import Unicode
 
-from .forward import ForwardBaseSpawner
+from forwardbasespawner import ForwardBaseSpawner
 
 class UnicoreSpawner(Spawner):
     job_descriptions = Dict(
