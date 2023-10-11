@@ -8,8 +8,8 @@ name = "jupyterhub-unicorespawner"
 description = "JupyterHub Spawner for UNICORE"
 readme = "README.md"
 requires-python = ">=3.9"
-licesse = {file = "LICENSE"}
-keywords = ["jupyterhub", "spawner"]
+license = {file = "LICENSE"}
+keywords = ["jupyterhub", "spawner", "unicore"]
 authors = [
     {name = "Tim Kreuzer", email = "t.kreuzer@fz-juelich.de"},
     {name = "Alice Grosch", email = "a.grosch@fz-juelich.de"}
@@ -26,13 +26,11 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[git]
-message_template = "Bump to {new_version}"
-tag_template = "{new_version}"
-
-[tool.hatch.build]
-artifacts = [
-    "unicorespawner/templates/*"
+[tool.black]
+target_version = [
+  "py39",
+  "py310",
+  "py311",
 ]
 
 [tool.hatch.version]
@@ -47,10 +45,6 @@ github_url = "https://github.com/kreuzert/jupyterhub-unicorespawner"
 
 [tool.tbump.version]
 current = "0.0.1.dev1"
-
-# Example of a semver regexp.
-# Make sure this matches current_version before
-# using tbump
 regex = '''
   (?P<major>\d+)
   \.
@@ -60,7 +54,7 @@ regex = '''
   (?P<pre>((a|b|rc)\d+)|)
   \.?
   (?P<dev>(?<=\.)dev\d*|)
-  '''
+'''
 
 [tool.tbump.git]
 message_template = "Bump to {new_version}"
@@ -70,14 +64,14 @@ tag_template = "{new_version}"
 # section containing the path of the file, relative to the
 # pyproject.toml location.
 
-[[tool.tbump.file]]
-src = "pyproject.toml"
-search = 'version = "{current_version}"'
+#[[tool.tbump.file]]
+#src = "pyproject.toml"
+#search = 'version = "{current_version}"'
 
 [[tool.tbump.file]]
 src = "unicorespawner/_version.py"
-version_template = '({major}, {minor}, {patch}, "{pre}", "{dev}")'
-search = "version_info = {current_version}"
+#version_template = '({major}, {minor}, {patch}, "{pre}", "{dev}")'
+#search = "version_info = {current_version}"
 
 #[[tool.tbump.file]]
 #src = "docs/source/_static/rest-api.yml"
