@@ -403,6 +403,9 @@ class UnicoreSpawner(Spawner):
         job = await self._get_job()
         try:
             is_running = self.timed_func_call(job.is_running)
+            self.log.info(
+                f"{self._log_name} - Poll is running: {is_running} for {self.resource_url}"
+            )
         except HTTPError as e:
             if getattr(e.response, "status_code", 500) == 404:
                 self.log.info(
