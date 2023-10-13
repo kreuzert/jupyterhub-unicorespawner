@@ -90,8 +90,8 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
 
 
 default_handlers.append(
-    (r"/api/users/progress/updateunicore/([^/]+)", SpawnEventsUNICOREAPIHandler)
+    (r"/api/users/progress/updateunicore/([^/]+)", SpawnEventsUnicoreAPIHandler)
 )
 default_handlers.append(
-    (r"/api/users/progress/updateunicore/([^/]+)/([^/]+)", SpawnEventsUNICOREAPIHandler)
+    (r"/api/users/progress/updateunicore/([^/]+)/([^/]+)", SpawnEventsUnicoreAPIHandler)
 )
