@@ -2,9 +2,7 @@ import copy
 import json
 import time
 
-import pyunicore.client as pyunicore
 from forwardbasespawner import ForwardBaseSpawner
-from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_path_join
 from requests.exceptions import HTTPError
@@ -15,7 +13,7 @@ from traitlets import Integer
 from traitlets import Unicode
 
 
-class UnicoreSpawner(Spawner):
+class UnicoreSpawner(ForwardBaseSpawner):
     job_descriptions = Dict(
         config=True,
         help="""
@@ -151,6 +149,82 @@ class UnicoreSpawner(Spawner):
             download_path = self.download_path
         return download_path
 
+    async def get_unicore_cert_path(self):
+        """Get unicore cert path
+
+        Returns:
+          path (string or false): Used in Unicore communication
+        """
+
+        if callable(self.unicore_cert_path):
+            unicore_cert_path = await maybe_future(self.unicore_cert_path(self))
+        else:
+            unicore_cert_path = self.unicore_cert_path
+        return unicore_cert_path
+
+    unicore_cert_path = Any(
+        config=True,
+        default_value=False,
+        help="""
+        UNICORE ca. Used in communication with Unicore.
+        String, False or Callable
+        Example::
+        
+        async def unicore_cert_path(spawner):
+            if spawner.user_options["system"][0] == "abc":
+                return "/mnt/certs/geant.crt"
+        
+        c.UnicoreSpawner.unicore_cert_path = unicore_cert_path
+        """,
+    )
+
+    async def get_unicore_cert_path(self):
+        """Get unicore cert path
+
+        Returns:
+          path (string or false): Used in Unicore communication
+        """
+
+        if callable(self.unicore_cert_path):
+            unicore_cert_path = await maybe_future(self.unicore_cert_path(self))
+        else:
+            unicore_cert_path = self.unicore_cert_path
+        return unicore_cert_path
+
+    unicore_cert_url = Any(
+        config=True,
+        default_value=False,
+        help="""
+        UNICORE certificate url. Used for verficiation with Unicore notifications.
+        String or Callable
+        default: f"{self.unicore_resource_url}/certificate
+        
+        Example::
+        
+        async def unicore_cert_url(spawner):
+            site_url = await spawner.get_unicore_site_url()
+            return f"{site_url}/certificate"
+        
+        c.UnicoreSpawner.unicore_cert_url = unicore_cert_url
+        """,
+    )
+
+    async def get_unicore_cert_url(self):
+        """Get unicore cert url
+
+        Returns:
+          path (string): Used in verification with Unicore notification
+        """
+
+        if callable(self.unicore_cert_url):
+            unicore_cert_url = await maybe_future(self.unicore_cert_url(self))
+        elif self.unicore_cert_url:
+            unicore_cert_url = self.unicore_cert_url
+        else:
+            site_url = await self.get_unicore_site_url()
+            unicore_cert_url = f"{site_url.rstrip('/')}/certificate"
+        return unicore_cert_url
+
     unicore_site_url = Any(
         config=True,
         help="""
@@ -184,6 +258,25 @@ class UnicoreSpawner(Spawner):
         default_value=False,
         help="""
         UNICORE site certificate path. String or False
+        """,
+    )
+
+    get_bss_notification_config = Dict(
+        config=True,
+        default_value={
+            "PENDING": {
+                "progress": 33,
+                "summary": "Your slurm job is currently in status PENDING.",
+                "details": "Job is awaiting resource allocation.",
+            },
+            "CONFIGURING": {
+                "progress": 35,
+                "summary": "Your slurm job is currently in status CONFIGURING. This may take up to 7 minutes.",
+                "details": "Job has been allocated resources, but are waiting for them to become ready for use (e.g. booting).",
+            },
+        },
+        help="""
+        Configure the events shown, when UNICORE gives an bss status update to api_notifications handler.
         """,
     )
 
@@ -268,6 +361,111 @@ class UnicoreSpawner(Spawner):
             preferences = self.unicore_transport_preferences
         return preferences
 
+        def timed_func_call(self, func, *args, **kwargs):
+            tic = time.time()
+            try:
+                ret = func(*args, **kwargs)
+            finally:
+                toc = time.time() - tic
+                extra = {
+                    "tictoc": f"{func.__module__},{func.__name__}",
+                    "duration": toc,
+                }
+                self.log.debug(
+                    f"{self._log_name} - UNICORE communication",
+                    extra=extra,
+                )
+            return ret
+
+        async def _get_transport(self):
+            transport_kwargs = await self.get_unicore_transport_kwargs()
+            preferences = await self.get_unicore_transport_preferences()
+            transport = self.timed_func_call(pyunicore.Transport, **transport_kwargs)
+
+            if preferences:
+                transport.preferences = preferences
+            return transport
+
+        async def _get_client(self):
+            site_url = await self.get_unicore_site_url()
+            transport = await self._get_transport()
+            client = self.timed_func_call(pyunicore.Client, transport, site_url)
+            return client
+
+        async def _get_job(self):
+            transport = await self._get_transport()
+            job = self.timed_func_call(pyunicore.Job, transport, self.resource_url)
+            return job
+
+        def _prettify_error_logs(log_list, lines, summary):
+            if type(log_list) == str:
+                log_list = log_list.split("\n")
+            if type(log_list) == list:
+                if lines > 0:
+                    log_list_short = log_list[-lines:]
+                if lines < len(log_list):
+                    log_list_short.insert(0, "...")
+                log_list_short_escaped = list(
+                    map(lambda x: html.escape(x), log_list_short)
+                )
+                logs_s = "<br>".join(log_list_short_escaped)
+            else:
+                logs_s = log_list.split()
+                logs_s = html.escape(logs_s)
+            return f"<details><summary>&nbsp&nbsp&nbsp&nbsp{summary}</summary>{logs_s}</details>"
+
+        def download_file(job, file):
+            file_path = job.working_dir.stat(file)
+            file_size = file_path.properties["size"]
+            if file_size == 0:
+                return f"{file} is empty"
+            offset = max(0, file_size - self.download_max_bytes)
+            s = file_path.raw(offset=offset)
+            return s.data.decode()
+
+        async def unicore_stop_event(self):
+            stderr = download_file(job, "stderr")
+            stdout = download_file(job, "stdout")
+            now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+
+            job = await self._get_job()
+
+            summary = f"UNICORE Job stopped with exitCode: {job.properties.get('exitCode', 'unknown exitCode')}"
+
+            unicore_status_message = job_properties.get(
+                "statusMessage", "unknown statusMessage"
+            )
+            unicore_logs_details = _prettify_error_logs(
+                job_properties.get("log", []), 20, "UNICORE logs:"
+            )
+
+            unicore_stdout_details = _prettify_error_logs(
+                unicore_stdout,
+                20,
+                "Job stdout:",
+            )
+            unicore_stderr_details = _prettify_error_logs(
+                unicore_stderr,
+                20,
+                "Job stderr:",
+            )
+
+            details = "".join(
+                [
+                    unicore_status_message,
+                    unicore_logs_details,
+                    unicore_stdout_details,
+                    unicore_stderr_details,
+                ]
+            )
+            event = {
+                "failed": True,
+                "progress": 100,
+                "html_message": f"<details><summary>{now}: {summary}</summary>{details}</details>",
+            }
+
+            return event
+
     def get_string(self, value):
         if type(value) != list:
             value = [value]
@@ -275,38 +473,6 @@ class UnicoreSpawner(Spawner):
             return ""
         else:
             return str(value[0])
-
-    def timed_func_call(self, func, *args, **kwargs):
-        tic = time.time()
-        try:
-            ret = func(*args, **kwargs)
-        finally:
-            toc = time.time() - tic
-            extra = {"tictoc": f"{func.__module__},{func.__name__}", "duration": toc}
-            self.log.debug(
-                f"{self._log_name} - UNICORE communication",
-                extra=extra,
-            )
-        return ret
-
-    async def _get_transport(self):
-        transport_kwargs = await self.get_unicore_transport_kwargs()
-        transport = self.timed_func_call(pyunicore.Transport, **transport_kwargs)
-        preferences = await self.get_unicore_transport_preferences()
-        if preferences:
-            transport.preferences = preferences
-        return transport
-
-    async def _get_client(self):
-        transport = await self._get_transport()
-        url = await self.get_unicore_site_url()
-        client = self.timed_func_call(pyunicore.Client, transport, url)
-        return client
-
-    async def _get_job(self):
-        transport = await self._get_transport()
-        job = self.timed_func_call(pyunicore.Job, transport, self.resource_url)
-        return job
 
     def clear_state(self):
         super().clear_state()
@@ -331,9 +497,6 @@ class UnicoreSpawner(Spawner):
             "JUPYTERHUB_ACTIVITY_URL"
         ] = f"{env['JUPYTERHUB_API_URL'].rstrip('/')}/users/{self.user.name}/activity"
         return env
-
-    def start(self):
-        return super().start()
 
     async def _start(self):
         job = self.get_string(self.user_options.get("job", ["default"]))
@@ -393,13 +556,12 @@ class UnicoreSpawner(Spawner):
 
         return ""
 
-    async def poll(self):
-        return await super().poll()
-
     async def _poll(self):
         if not self.resource_url:
             return 0
 
+        transport_kwargs = await self.get_unicore_transport_kwargs()
+        preferences = await self.get_unicore_transport_preferences()
         job = await self._get_job()
         try:
             is_running = self.timed_func_call(job.is_running)
@@ -427,38 +589,14 @@ class UnicoreSpawner(Spawner):
         else:
             return 0
 
-    def download_file(self, job, file):
-        file_path = job.working_dir.stat(file)
-        file_size = file_path.properties["size"]
-        if file_size == 0:
-            return f"{file} is empty"
-        offset = max(0, file_size - self.download_max_bytes)
-        s = file_path.raw(offset=offset)
-        return s.data.decode()
-
-    async def stop(self, now, **kwargs):
-        return await super().stop(now, **kwargs)
-
     async def _stop(self, now, **kwargs):
         if not self.resource_url:
             return
 
+        transport_kwargs = await self.get_unicore_transport_kwargs()
+        preferences = await self.get_unicore_transport_preferences()
         job = await self._get_job()
         job.abort()
-        stderr = self.download_file(job, "stderr")
-        stdout = self.download_file(job, "stdout")
-        self.log.info(f"{self._log_name} - Stop stderr:\n{stderr}")
-        self.log.info(f"{self._log_name} - Stop stdout:\n{stdout}")
+
         if self.unicore_job_delete:
             job.delete()
-
-
-class UnicoreForwardSpawner(UnicoreSpawner, ForwardBaseSpawner):
-    async def start(self):
-        return await ForwardBaseSpawner.start(self)
-
-    async def poll(self):
-        return await ForwardBaseSpawner.poll(self)
-
-    async def stop(self, now=False, **kwargs):
-        return await ForwardBaseSpawner.stop(self, now=now, **kwargs)

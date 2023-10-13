@@ -1,3 +1,4 @@
 from ._version import __version__
-from .spawner import UnicoreSpawner
+from .api_notifications import SpawnEventsUnicoreAPIHandler
 from .spawner import UnicoreForwardSpawner
+from .spawner import UnicoreSpawner
