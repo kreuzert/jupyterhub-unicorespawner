@@ -10,8 +10,6 @@ from jupyterhub.apihandlers import default_handlers
 from jupyterhub.apihandlers.base import APIHandler
 from tornado.httpclient import HTTPRequest
 
-from unicorespawner import utils
-
 
 class SpawnEventsUnicoreAPIHandler(APIHandler):
     def check_xsrf_cookie(self):
