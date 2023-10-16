@@ -361,110 +361,108 @@ class UnicoreSpawner(ForwardBaseSpawner):
             preferences = self.unicore_transport_preferences
         return preferences
 
-        def timed_func_call(self, func, *args, **kwargs):
-            tic = time.time()
-            try:
-                ret = func(*args, **kwargs)
-            finally:
-                toc = time.time() - tic
-                extra = {
-                    "tictoc": f"{func.__module__},{func.__name__}",
-                    "duration": toc,
-                }
-                self.log.debug(
-                    f"{self._log_name} - UNICORE communication",
-                    extra=extra,
-                )
-            return ret
-
-        async def _get_transport(self):
-            transport_kwargs = await self.get_unicore_transport_kwargs()
-            preferences = await self.get_unicore_transport_preferences()
-            transport = self.timed_func_call(pyunicore.Transport, **transport_kwargs)
-
-            if preferences:
-                transport.preferences = preferences
-            return transport
-
-        async def _get_client(self):
-            site_url = await self.get_unicore_site_url()
-            transport = await self._get_transport()
-            client = self.timed_func_call(pyunicore.Client, transport, site_url)
-            return client
-
-        async def _get_job(self):
-            transport = await self._get_transport()
-            job = self.timed_func_call(pyunicore.Job, transport, self.resource_url)
-            return job
-
-        def _prettify_error_logs(log_list, lines, summary):
-            if type(log_list) == str:
-                log_list = log_list.split("\n")
-            if type(log_list) == list:
-                if lines > 0:
-                    log_list_short = log_list[-lines:]
-                if lines < len(log_list):
-                    log_list_short.insert(0, "...")
-                log_list_short_escaped = list(
-                    map(lambda x: html.escape(x), log_list_short)
-                )
-                logs_s = "<br>".join(log_list_short_escaped)
-            else:
-                logs_s = log_list.split()
-                logs_s = html.escape(logs_s)
-            return f"<details><summary>&nbsp&nbsp&nbsp&nbsp{summary}</summary>{logs_s}</details>"
-
-        def download_file(job, file):
-            file_path = job.working_dir.stat(file)
-            file_size = file_path.properties["size"]
-            if file_size == 0:
-                return f"{file} is empty"
-            offset = max(0, file_size - self.download_max_bytes)
-            s = file_path.raw(offset=offset)
-            return s.data.decode()
-
-        async def unicore_stop_event(self):
-            stderr = download_file(job, "stderr")
-            stdout = download_file(job, "stdout")
-            now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
-
-            job = await self._get_job()
-
-            summary = f"UNICORE Job stopped with exitCode: {job.properties.get('exitCode', 'unknown exitCode')}"
-
-            unicore_status_message = job_properties.get(
-                "statusMessage", "unknown statusMessage"
-            )
-            unicore_logs_details = _prettify_error_logs(
-                job_properties.get("log", []), 20, "UNICORE logs:"
-            )
-
-            unicore_stdout_details = _prettify_error_logs(
-                unicore_stdout,
-                20,
-                "Job stdout:",
-            )
-            unicore_stderr_details = _prettify_error_logs(
-                unicore_stderr,
-                20,
-                "Job stderr:",
-            )
-
-            details = "".join(
-                [
-                    unicore_status_message,
-                    unicore_logs_details,
-                    unicore_stdout_details,
-                    unicore_stderr_details,
-                ]
-            )
-            event = {
-                "failed": True,
-                "progress": 100,
-                "html_message": f"<details><summary>{now}: {summary}</summary>{details}</details>",
+    def timed_func_call(self, func, *args, **kwargs):
+        tic = time.time()
+        try:
+            ret = func(*args, **kwargs)
+        finally:
+            toc = time.time() - tic
+            extra = {
+                "tictoc": f"{func.__module__},{func.__name__}",
+                "duration": toc,
             }
+            self.log.debug(
+                f"{self._log_name} - UNICORE communication",
+                extra=extra,
+            )
+        return ret
 
-            return event
+    async def _get_transport(self):
+        transport_kwargs = await self.get_unicore_transport_kwargs()
+        preferences = await self.get_unicore_transport_preferences()
+        transport = self.timed_func_call(pyunicore.Transport, **transport_kwargs)
+
+        if preferences:
+            transport.preferences = preferences
+        return transport
+
+    async def _get_client(self):
+        site_url = await self.get_unicore_site_url()
+        transport = await self._get_transport()
+        client = self.timed_func_call(pyunicore.Client, transport, site_url)
+        return client
+
+    async def _get_job(self):
+        transport = await self._get_transport()
+        job = self.timed_func_call(pyunicore.Job, transport, self.resource_url)
+        return job
+
+    def _prettify_error_logs(log_list, lines, summary):
+        if type(log_list) == str:
+            log_list = log_list.split("\n")
+        if type(log_list) == list:
+            if lines > 0:
+                log_list_short = log_list[-lines:]
+            if lines < len(log_list):
+                log_list_short.insert(0, "...")
+            log_list_short_escaped = list(map(lambda x: html.escape(x), log_list_short))
+            logs_s = "<br>".join(log_list_short_escaped)
+        else:
+            logs_s = log_list.split()
+            logs_s = html.escape(logs_s)
+        return f"<details><summary>&nbsp&nbsp&nbsp&nbsp{summary}</summary>{logs_s}</details>"
+
+    def download_file(job, file):
+        file_path = job.working_dir.stat(file)
+        file_size = file_path.properties["size"]
+        if file_size == 0:
+            return f"{file} is empty"
+        offset = max(0, file_size - self.download_max_bytes)
+        s = file_path.raw(offset=offset)
+        return s.data.decode()
+
+    async def unicore_stop_event(self):
+        stderr = download_file(job, "stderr")
+        stdout = download_file(job, "stdout")
+        now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+
+        job = await self._get_job()
+
+        summary = f"UNICORE Job stopped with exitCode: {job.properties.get('exitCode', 'unknown exitCode')}"
+
+        unicore_status_message = job_properties.get(
+            "statusMessage", "unknown statusMessage"
+        )
+        unicore_logs_details = _prettify_error_logs(
+            job_properties.get("log", []), 20, "UNICORE logs:"
+        )
+
+        unicore_stdout_details = _prettify_error_logs(
+            unicore_stdout,
+            20,
+            "Job stdout:",
+        )
+        unicore_stderr_details = _prettify_error_logs(
+            unicore_stderr,
+            20,
+            "Job stderr:",
+        )
+
+        details = "".join(
+            [
+                unicore_status_message,
+                unicore_logs_details,
+                unicore_stdout_details,
+                unicore_stderr_details,
+            ]
+        )
+        event = {
+            "failed": True,
+            "progress": 100,
+            "html_message": f"<details><summary>{now}: {summary}</summary>{details}</details>",
+        }
+
+        return event
 
     def get_string(self, value):
         if type(value) != list:
