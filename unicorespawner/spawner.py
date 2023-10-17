@@ -79,12 +79,12 @@ class UnicoreSpawner(ForwardBaseSpawner):
         With these replacements the same template job_description
         can be used for multiple systems and versions.
         
-        In the example below all occurrences of `{{startmsg}}` or `{{version}}`
+        In the example below all occurrences of `<startmsg>` or `<version>`
         in the job description will be replaced, depending on
         the defined user_options `system` and `job`. This reduces redundancy
-        in `Spawner.jobs` configuration (by using the same function for multiple
-        jobs) and in configuration files (by using variables within the
-        job description file).
+        in `Spawner.job_descriptions` configuration (by using the same 
+        function for multiple jobs) and in configuration files 
+        (by using variables within the job description file).
         
         Example::
         
@@ -128,16 +128,23 @@ class UnicoreSpawner(ForwardBaseSpawner):
         config=True,
         default_value=True,
         help="""
-        Whether unicore jobs should be deleted when stopped
+        Whether unicore jobs should be deleted when stopped or not.
         """,
     )
 
     download_path = Any(
         config=True,
-        default_value="",
+        default_value=False,
         help="""
         Function to define where to store stderr/stdout after stopping
-        the job
+        the job.
+        
+        String, False or Callable.
+        
+        Must return a string to the directory, where the output will be stored.
+        False if nothing should be stored (default).
+        Maybe a coroutine.
+        
         """,
     )
 
@@ -173,6 +180,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
         help="""
         UNICORE ca. Used in communication with Unicore.
         String, False or Callable
+        
         Example::
         
         async def unicore_cert_path(spawner):
@@ -183,26 +191,13 @@ class UnicoreSpawner(ForwardBaseSpawner):
         """,
     )
 
-    async def get_unicore_cert_path(self):
-        """Get unicore cert path
-
-        Returns:
-          path (string or false): Used in Unicore communication
-        """
-
-        if callable(self.unicore_cert_path):
-            unicore_cert_path = await maybe_future(self.unicore_cert_path(self))
-        else:
-            unicore_cert_path = self.unicore_cert_path
-        return unicore_cert_path
-
     unicore_cert_url = Any(
         config=True,
         default_value=False,
         help="""
-        UNICORE certificate url. Used for verficiation with Unicore notifications.
+        Unicore certificate url. Used for verficiation with Unicore notifications.
         String or Callable
-        default: f"{self.unicore_resource_url}/certificate
+        default: f"{self.unicore_site_url}/certificate
         
         Example::
         
@@ -235,6 +230,9 @@ class UnicoreSpawner(ForwardBaseSpawner):
         help="""
         UNICORE site url.
         
+        String or callable.
+        Maybe a coroutine.
+        
         Example::
         
         async def site_url(spawner):
@@ -258,19 +256,15 @@ class UnicoreSpawner(ForwardBaseSpawner):
             url = self.unicore_site_url
         return url
 
-    unicore_cert_path = Any(
-        config=True,
-        default_value=False,
-        help="""
-        UNICORE site certificate path. String or False
-        """,
-    )
-
     unicore_internal_forwarding = Any(
         config=True,
         default_value=True,
-        elp="""
-        ...
+        help="""
+        Whether to use the unicore forwarding feature or an
+        external solution. 
+        See documentation for more information.
+        
+        Boolean or Callable.
         """,
     )
 
@@ -298,7 +292,8 @@ class UnicoreSpawner(ForwardBaseSpawner):
             },
         },
         help="""
-        Configure the events shown, when UNICORE gives an bss status update to api_notifications handler.
+        Configure events shown to the user, when Unicore
+        gives an bss status update to api_notifications handler.
         """,
     )
 
@@ -315,7 +310,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
         config=True,
         default_value=4096,
         help="""
-        UNICORE max_bytes for Download stderr and stdout
+        Unicore max_bytes for Download stderr and stdout
         """,
     )
 
@@ -399,7 +394,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
         finally:
             toc = time.time() - tic
             extra = {
-                "tictoc": f"{func.__module__},{func.__name__}",
+                "tictoc": f"{func.__module__}.{func.__name__}",
                 "duration": toc,
             }
             self.log.debug(
