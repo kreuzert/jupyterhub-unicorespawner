@@ -8,7 +8,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_pem_x509_certificate
 from jupyterhub.apihandlers import default_handlers
 from jupyterhub.apihandlers.base import APIHandler
-from tornado.httpclient import HTTPRequest
 
 
 class SpawnEventsUnicoreAPIHandler(APIHandler):
@@ -42,7 +41,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
         body = self.request.body.decode("utf8")
         body = json.loads(body) if body else {}
         self.log.info(
-            f"{spawner._log_name} - Unicore Status Update received",
+            f"{spawner._log_name} - Unicore Status Update received - {body.get('status', '')}",
             extra={
                 "uuidcode": spawner.name,
                 "username": user.name,
@@ -64,13 +63,13 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
                 },
             )
             if bool(spawner._spawn_pending or spawner.ready):
-                asyncio.create_task(
-                    spawner.stop(cancel=True, event=spawner.unicore_stop_event)
-                )
+                event = await spawner.unicore_stop_event()
+                asyncio.create_task(spawner.stop(cancel=True, event=event))
         else:
             bssStatus = body.get("bssStatus", "")
             # It's in Running (UNICORE wise) state. We can now check for bssStatus to get more details
-            for key, bssDetails in spawner.bss_notification_config.items():
+            bss_config = await spawner.get_bss_notification_config()
+            for key, bssDetails in bss_config.items():
                 if key == bssStatus:
                     now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
                     summary = bssDetails.get("summary", f"Slurm status: {key}")
