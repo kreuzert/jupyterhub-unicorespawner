@@ -454,7 +454,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
         s = file_path.raw(offset=offset)
         return s.data.decode()
 
-    async def unicore_stop_event(self):
+    async def unicore_stop_event(self, spawner):
         job = await self._get_job()
 
         unicore_stderr = self.download_file(job, "stderr")
