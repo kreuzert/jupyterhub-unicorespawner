@@ -398,7 +398,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
                 "duration": toc,
             }
             self.log.debug(
-                f"{self._log_name} - UNICORE communication",
+                f"{self._log_name} - UNICORE communication ( {toc}s )",
                 extra=extra,
             )
         return ret
