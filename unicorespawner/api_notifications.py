@@ -1,5 +1,5 @@
-import asyncio
 import datetime
+import inspect
 import json
 
 import jwt
@@ -63,8 +63,18 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
                 },
             )
             if bool(spawner._spawn_pending or spawner.ready):
-                event = await spawner.unicore_stop_event()
-                asyncio.create_task(spawner.stop(cancel=True, event=event))
+                try:
+                    if not getattr(spawner, "resource_url", None):
+                        spawner.resource_url = body.get("href", "")
+                    event = await spawner.unicore_stop_event(spawner)
+                except:
+                    self.log.exception(
+                        f"{spawner._log_name} - Could not create stop event"
+                    )
+                    event = None
+                stop = spawner.stop(cancel=True, event=event)
+                if inspect.isawaitable(stop):
+                    await stop
         else:
             bssStatus = body.get("bssStatus", "")
             # It's in Running (UNICORE wise) state. We can now check for bssStatus to get more details
