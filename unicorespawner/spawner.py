@@ -19,7 +19,7 @@ from traitlets import Integer
 
 
 class UnicoreSpawner(ForwardBaseSpawner):
-    job_descriptions = Dict(
+    job_description = Any(
         config=True,
         help="""
         Multiple named job descriptions to start different UNICORE Jobs.
@@ -44,12 +44,8 @@ class UnicoreSpawner(ForwardBaseSpawner):
         
         import os
         import json
-        async def get_job_description(spawner):
-            job = spawner.user_options.get("job", ["None"])
-            if type(job) != list:
-                job = [job]
-            job = job[0]
-            
+        async def get_job_description(spawner, user_options):
+            job = user_options["job"]
             with open(f"/mnt/jobs/{job}/job_description.json", "r") as f:
                 job_description = json.load(f)
             
@@ -61,11 +57,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
 
             return job_description
 
-
-        c.UnicoreSpawner.job_descriptions = {
-            "job-1": get_job_description,
-            "job-2": get_job_description
-        }     
+        c.UnicoreSpawner.job_description = get_job_description
         """,
     )
 
@@ -537,11 +529,11 @@ class UnicoreSpawner(ForwardBaseSpawner):
         return env
 
     async def _start(self):
-        job = self.get_string(self.user_options.get("job", ["default"]))
-        job_description = self.job_descriptions[job]
-
+        job_description = self.job_description
         if callable(job_description):
-            job_description = await maybe_future(job_description(self))
+            job_description = await maybe_future(
+                job_description(self, self.user_options)
+            )
 
         env = self.get_env()
         job_description = json.dumps(job_description)
