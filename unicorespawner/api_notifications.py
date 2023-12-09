@@ -14,7 +14,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
     def check_xsrf_cookie(self):
         pass
 
-    async def post(self, user_name, server_name=""):
+    async def post(self, unique_start_id, user_name, server_name=""):
         user = self.find_user(user_name)
         if user is None:
             self.set_status(404)
@@ -24,6 +24,14 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
             return
 
         spawner = user.spawners[server_name]
+
+        if spawner.unique_start_id != unique_start_id:
+            self.log.warning(
+                f"{spawner._log_name} - Spawner unique start id ({spawner.unique_start_id}) does not match given id ({unique_start_id}). Do not update Spawner"
+            )
+            self.set_status(400)
+            return
+
         cert_path = await spawner.get_unicore_cert_path()
         cert_url = await spawner.get_unicore_cert_url()
 
@@ -51,7 +59,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
             },
         )
         if body.get("status", "") in ["FAILED", "SUCCESSFUL", "DONE"]:
-            # spawner.poll will check the current status via UnicoreMgr.
+            # spawner.poll will check the current status.
             # This will download the logs and show them to the user.
             # It will also cancel the current spawn attempt.
             self.log.debug(
@@ -75,6 +83,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
                 stop = spawner.stop(cancel=True, event=event)
                 if inspect.isawaitable(stop):
                     await stop
+                spawner.run_post_stop_hook()
         else:
             bssStatus = body.get("bssStatus", "")
             # It's in Running (UNICORE wise) state. We can now check for bssStatus to get more details
@@ -99,8 +108,11 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
 
 
 default_handlers.append(
-    (r"/api/users/progress/updateunicore/([^/]+)", SpawnEventsUnicoreAPIHandler)
+    (r"/api/users/progress/updateunicore/([^/]+)/([^/]+)", SpawnEventsUnicoreAPIHandler)
 )
 default_handlers.append(
-    (r"/api/users/progress/updateunicore/([^/]+)/([^/]+)", SpawnEventsUnicoreAPIHandler)
+    (
+        r"/api/users/progress/updateunicore/([^/]+)/([^/]+)/([^/]+)",
+        SpawnEventsUnicoreAPIHandler,
+    )
 )

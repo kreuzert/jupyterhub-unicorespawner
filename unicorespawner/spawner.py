@@ -3,6 +3,7 @@ import html
 import json
 import re
 import time
+import uuid
 from datetime import datetime
 
 import pyunicore.client as pyunicore
@@ -19,6 +20,10 @@ from traitlets import Integer
 
 
 class UnicoreSpawner(ForwardBaseSpawner):
+    # Used in api_notifications to check, if the UNICORE notification
+    # is for the current start attempt.
+    unique_start_id = ""
+
     job_description = Any(
         config=True,
         help="""
@@ -499,17 +504,21 @@ class UnicoreSpawner(ForwardBaseSpawner):
 
     def clear_state(self):
         super().clear_state()
+        self.unique_start_id = ""
         self.resource_url = ""
 
     def get_state(self):
         state = super().get_state()
         state["resource_url"] = self.resource_url
+        state["unique_start_id"] = self.unique_start_id
         return state
 
     def load_state(self, state):
         super().load_state(state)
         if "resource_url" in state:
             self.resource_url = state["resource_url"]
+        if "unique_start_id" in state:
+            self.unique_start_id = state["unique_start_id"]
 
     def get_env(self):
         env = super().get_env()
@@ -520,15 +529,27 @@ class UnicoreSpawner(ForwardBaseSpawner):
         ] = f"{env['JUPYTERHUB_API_URL']}/users/{self.user.name}/activity"
 
         # Add URL to receive UNICORE status updates
-        url_parts = ["users", "progress", "updateunicore", self.user.escaped_name]
-        if self.name:
-            url_parts.append(self.name)
-        env[
-            "JUPYTERHUB_UNICORE_NOTIFICATION_URL"
-        ] = f"{env['JUPYTERHUB_API_URL']}/{url_path_join(*url_parts)}"
+        if self.unique_start_id:
+            url_parts = [
+                "users",
+                "progress",
+                "updateunicore",
+                self.unique_start_id,
+                self.user.escaped_name,
+            ]
+            if self.name:
+                url_parts.append(self.name)
+            env[
+                "JUPYTERHUB_UNICORE_NOTIFICATION_URL"
+            ] = f"{env['JUPYTERHUB_API_URL']}/{url_path_join(*url_parts)}"
+        else:
+            self.log.warning(
+                f"{self._log_name} - Unique Start ID is missing. Cannot configure Unicore Notification URL."
+            )
         return env
 
     async def _start(self):
+        self.unique_start_id = uuid.uuid4().hex
         job_description = self.job_description
         if callable(job_description):
             job_description = await maybe_future(
