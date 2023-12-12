@@ -666,7 +666,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
             return await super().ssh_default_forward_remove()
 
     async def _poll(self):
-        if not self.resource_url:
+        if not getattr(self, "resource_url", False):
             return 0
 
         job = await self._get_job()
@@ -697,7 +697,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
             return 0
 
     async def _stop(self, now, **kwargs):
-        if not self.resource_url:
+        if not getattr(self, "resource_url", False):
             return
 
         job = await self._get_job()
