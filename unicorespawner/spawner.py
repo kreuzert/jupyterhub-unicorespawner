@@ -20,10 +20,6 @@ from traitlets import Integer
 
 
 class UnicoreSpawner(ForwardBaseSpawner):
-    # Used in api_notifications to check, if the UNICORE notification
-    # is for the current start attempt.
-    unique_start_id = ""
-
     job_description = Any(
         config=True,
         help="""
@@ -504,21 +500,17 @@ class UnicoreSpawner(ForwardBaseSpawner):
 
     def clear_state(self):
         super().clear_state()
-        self.unique_start_id = ""
         self.resource_url = ""
 
     def get_state(self):
         state = super().get_state()
         state["resource_url"] = self.resource_url
-        state["unique_start_id"] = self.unique_start_id
         return state
 
     def load_state(self, state):
         super().load_state(state)
         if "resource_url" in state:
             self.resource_url = state["resource_url"]
-        if "unique_start_id" in state:
-            self.unique_start_id = state["unique_start_id"]
 
     def get_env(self):
         env = super().get_env()
@@ -549,7 +541,6 @@ class UnicoreSpawner(ForwardBaseSpawner):
         return env
 
     async def _start(self):
-        self.unique_start_id = uuid.uuid4().hex
         job_description = self.job_description
         if callable(job_description):
             job_description = await maybe_future(
