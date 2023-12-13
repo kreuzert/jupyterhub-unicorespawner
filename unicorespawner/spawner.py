@@ -439,13 +439,17 @@ class UnicoreSpawner(ForwardBaseSpawner):
         return f"<details><summary>&nbsp&nbsp&nbsp&nbsp{summary}(click here to expand):</summary>{logs_s}</details>"
 
     def download_file(self, job, file):
-        file_path = job.working_dir.stat(file)
-        file_size = file_path.properties["size"]
-        if file_size == 0:
-            return f"{file} is empty"
-        offset = max(0, file_size - self.download_max_bytes)
-        s = file_path.raw(offset=offset)
-        return s.data.decode()
+        try:
+            file_path = job.working_dir.stat(file)
+            file_size = file_path.properties["size"]
+            if file_size == 0:
+                return f"{file} is empty"
+            offset = max(0, file_size - self.download_max_bytes)
+            s = file_path.raw(offset=offset)
+            return s.data.decode()
+        except:
+            self.log.exception(f"Could not load file {file}")
+            return f"{file} does not exist"
 
     async def unicore_stop_event(self, spawner):
         job = await self._get_job()
@@ -698,6 +702,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
 
     async def _stop(self, now, **kwargs):
         if not getattr(self, "resource_url", False):
+            f"{self._log_name} - Resource_url not set. Do not stop job."
             return
 
         job = await self._get_job()
