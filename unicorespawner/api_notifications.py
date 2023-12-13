@@ -90,7 +90,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
             bss_config = await spawner.get_bss_notification_config()
             for key, bssDetails in bss_config.items():
                 if key == bssStatus:
-                    now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+                    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                     summary = bssDetails.get("summary", f"Slurm status: {key}")
                     details = bssDetails.get(
                         "details",
