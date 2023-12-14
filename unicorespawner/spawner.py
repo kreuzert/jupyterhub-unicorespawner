@@ -456,7 +456,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
 
         unicore_stderr = self.download_file(job, "stderr")
         unicore_stdout = self.download_file(job, "stdout")
-        now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
         summary = f"UNICORE Job stopped with exitCode: {job.properties.get('exitCode', 'unknown exitCode')}"
 
