@@ -525,12 +525,12 @@ class UnicoreSpawner(ForwardBaseSpawner):
         ] = f"{env['JUPYTERHUB_API_URL']}/users/{self.user.name}/activity"
 
         # Add URL to receive UNICORE status updates
-        if self.unique_start_id:
+        if self.start_id:
             url_parts = [
                 "users",
                 "progress",
                 "updateunicore",
-                self.unique_start_id,
+                self.start_id,
                 self.user.escaped_name,
             ]
             if self.name:

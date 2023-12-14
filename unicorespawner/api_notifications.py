@@ -14,7 +14,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
     def check_xsrf_cookie(self):
         pass
 
-    async def post(self, unique_start_id, user_name, server_name=""):
+    async def post(self, start_id, user_name, server_name=""):
         user = self.find_user(user_name)
         if user is None:
             self.set_status(404)
@@ -25,9 +25,9 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
 
         spawner = user.spawners[server_name]
 
-        if spawner.unique_start_id != unique_start_id:
+        if spawner.start_id != start_id:
             self.log.warning(
-                f"{spawner._log_name} - Spawner unique start id ({spawner.unique_start_id}) does not match given id ({unique_start_id}). Do not update Spawner"
+                f"{spawner._log_name} - Spawner unique start id ({spawner.start_id}) does not match given id ({start_id}). Do not update Spawner"
             )
             self.set_status(400)
             return
