@@ -25,7 +25,8 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
 
         spawner = user.spawners[server_name]
 
-        if spawner.start_id != start_id:
+        if spawner.start_id and spawner.start_id != start_id:
+            # If the spawner has currently a start_id and it's different, then we don't forward the given update
             self.log.warning(
                 f"{spawner._log_name} - Spawner unique start id ({spawner.start_id}) does not match given id ({start_id}). Do not update Spawner"
             )
