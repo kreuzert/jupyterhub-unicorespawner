@@ -1,6 +1,6 @@
 # API Endpoints
 
-Below is an interactive view of the OutpostSpawner REST API specification.
+Below is an interactive view of the UNICORESpawner REST API specification.
 
 <!-- client-rendered openapi UI copied from FastAPI -->
 

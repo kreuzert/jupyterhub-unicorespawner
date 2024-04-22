@@ -1,5 +1,7 @@
 # UNICORESpawner
 
+Also look at the configuration of the base class [JupyterHub ForwardBaseSpawner](https://jupyterhub-forwardbasespawner.readthedocs.io/en/latest/spawners/forwardbasespawner.html)
+
 ```{eval-rst}
 .. automodule:: unicorespawner
 ```
