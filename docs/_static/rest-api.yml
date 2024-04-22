@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: JupyterHub UNICORESpawner
+  description: The REST API for JupyterHub UNICORESpawner
+  license:
+    name: BSD-3-Clause
+servers:
+  - url: /hub/api
+security:
+  - token: []
+paths:
+  /users/progress/updateunicore/{start_id}/{user_name}:
+    post:
+      summary: Used by UNICORE to callback feature.
+      description: |
+        This endpoint will be called by UNICORE to inform JupyterHub
+        about job updates, if it's configured in the job_description.
+      parameters:
+        - name: start_id
+          in: path
+          description: unique id of start attempt
+          required: true
+          schema:
+            type: string
+        - name: user_name
+          in: path
+          description: username
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: |
+          Send update of UNICORE job to JupyterHub.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: |
+                    Current status of the UNICORE job.
+                  required: true
+                bssStatus:
+                  type: string
+                  description: |
+                    Current status of the batch job.
+                  required: false
+              example:
+                status: "RUNNING"
+                bssStatus: "CONFIGURING"
+      responses:
+        200:
+          content: {}
+        400:
+          description: Given start_id does not match current start attempt. Occures if a start attempt was stopped and immediately restarted. The UNICORE job update might come in late, during the start of the second attempt.
+          content: {}
+  /users/progress/updateunicore/{start_id}/{user_name}/{server_name}:
+    post:
+      summary: Used by UNICORE to callback feature.
+      description: |
+        This endpoint will be called by UNICORE to inform JupyterHub
+        about job updates, if it's configured in the job_description.
+      parameters:
+        - name: start_id
+          in: path
+          description: unique id of start attempt
+          required: true
+          schema:
+            type: string
+        - name: user_name
+          in: path
+          description: username
+          required: true
+          schema:
+            type: string
+        - name: server_name
+          in: path
+          description: |
+            name given to a named-server.
+
+            Note that depending on your JupyterHub infrastructure there are chracterter size limitation to `server_name`. Default spawner with K8s pod will not allow Jupyter Notebooks to be spawned with a name that contains more than 253 characters (keep in mind that the pod will be spawned with extra characters to identify the user and hub).
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: |
+          Send update of UNICORE job to JupyterHub.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: |
+                    Current status of the UNICORE job.
+                  required: true
+                bssStatus:
+                  type: string
+                  description: |
+                    Current status of the batch job.
+                  required: false
+              example:
+                status: "RUNNING"
+                bssStatus: "CONFIGURING"
+      responses:
+        200:
+          content: {}
+        400:
+          description: Given start_id does not match current start attempt. Occures if a start attempt was stopped and immediately restarted. The UNICORE job update might come in late, during the start of the second attempt.
+          content: {}
