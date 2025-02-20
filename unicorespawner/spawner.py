@@ -610,12 +610,14 @@ class UnicoreSpawner(ForwardBaseSpawner):
         jd_env.update(env)
 
         if self.store_environment_in_file:
-            env_file = "#!/bin/bash"
+            env_file = "#!/bin/bash\n"
             for key, value in jd_env.items():
                 env_file += f"export {key}={value}\n"
             if "Imports" not in job_description.keys():
-                job_description["Imports"] = {}
-            job_description["Imports"][".env"] = env_file
+                job_description["Imports"] = []
+            job_description["Imports"].append(
+                {"From": "inline://dummy", "To": ".env", "Data": env_file}
+            )
             if "Environment" in job_description.keys():
                 del job_description["Environment"]
         else:
