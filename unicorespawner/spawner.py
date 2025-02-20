@@ -297,7 +297,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
             bss_notification_config = self.bss_notification_config
         return bss_notification_config
 
-    store_environment_in_file = Boolean(
+    store_environment_in_file = Bool(
         config=True,
         default_value=False,
         help="""
