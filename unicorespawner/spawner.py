@@ -297,6 +297,15 @@ class UnicoreSpawner(ForwardBaseSpawner):
             bss_notification_config = self.bss_notification_config
         return bss_notification_config
 
+    store_environment_in_file = Boolean(
+        config=True,
+        default_value=False,
+        help="""
+        Store all environment variables in a .env file, instead of storing them in the job_description directly.
+        Might be useful to hide them from other users.
+        """,
+    )
+
     download_max_bytes = Integer(
         config=True,
         default_value=4096,
@@ -599,7 +608,18 @@ class UnicoreSpawner(ForwardBaseSpawner):
                 self.log.debug(f"{self._log_name} - Remove {key} from env")
                 del env[key]
         jd_env.update(env)
-        job_description["Environment"] = jd_env
+
+        if self.store_environment_in_file:
+            env_file = "#!/bin/bash"
+            for key, value in jd_env.items():
+                env_file += f"export {key}={value}\n"
+            if "Imports" not in job_description.keys():
+                job_description["Imports"] = {}
+            job_description["Imports"][".env"] = env_file
+            if "Environment" in job_description.keys():
+                del job_description["Environment"]
+        else:
+            job_description["Environment"] = jd_env
 
         client = await self._get_client()
         unicore_job = self.timed_func_call(client.new_job, job_description)
