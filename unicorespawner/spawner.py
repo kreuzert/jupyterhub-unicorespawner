@@ -612,7 +612,11 @@ class UnicoreSpawner(ForwardBaseSpawner):
         if self.store_environment_in_file:
             env_file = "#!/bin/bash\n"
             for key, value in jd_env.items():
-                env_file += f"export {key}={value}\n"
+                if value.startswith("[") and value.endswith("]"):
+                    value = value.replace('"', "'")
+                    env_file += f'export {key}="{value}"\n'
+                else:
+                    env_file += f"export {key}={value}\n"
             if "Imports" not in job_description.keys():
                 job_description["Imports"] = []
             job_description["Imports"].append(
