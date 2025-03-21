@@ -103,7 +103,8 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
                         "progress": progress,
                         "html_message": f"<details><summary>{now}: {summary}</summary>{details}</details>",
                     }
-                    spawner.latest_events.append(event)
+                    if hasattr(spawner, "events") and type(spawner.events) == list:
+                        spawner.events.append(event)
 
         self.set_status(200)
 
