@@ -1,5 +1,5 @@
+import asyncio
 import datetime
-import inspect
 import json
 
 import jwt
@@ -75,16 +75,27 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
                 try:
                     if not getattr(spawner, "resource_url", None):
                         spawner.resource_url = body.get("href", "")
-                    event = await spawner.unicore_stop_event(spawner)
+                    event = await spawner.unicore_stop_event()
                 except:
                     self.log.exception(
                         f"{spawner._log_name} - Could not create stop event"
                     )
                     event = None
-                stop = spawner.stop(cancel=True, event=event)
-                if inspect.isawaitable(stop):
-                    await stop
-                spawner.run_post_stop_hook()
+
+                spawner.last_event = event
+                if spawner.pending:
+                    spawn_future = spawner._spawn_future
+                    if spawn_future:
+                        spawn_future.cancel()
+                    # Give cancel a chance to resolve?
+                    # not sure what we would wait for here,
+                    await asyncio.sleep(1)
+                    await self.stop_single_user(user, server_name)
+                else:
+                    # include notify, so that a server that died is noticed immediately
+                    status = await spawner.poll_and_notify()
+                    if status is None:
+                        await self.stop_single_user(user, server_name)
         else:
             bssStatus = body.get("bssStatus", "")
             # It's in Running (UNICORE wise) state. We can now check for bssStatus to get more details

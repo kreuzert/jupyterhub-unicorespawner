@@ -461,7 +461,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
             self.log.exception(f"{self._log_name} - Could not load file {file}")
             return f"{file} does not exist"
 
-    async def unicore_stop_event(self, spawner):
+    async def unicore_stop_event(self):
         job = await self._get_job()
 
         timeout = 10
