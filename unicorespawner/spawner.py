@@ -18,6 +18,8 @@ from traitlets import Integer
 
 
 class UnicoreSpawner(ForwardBaseSpawner):
+    resource_url = ""
+
     job_description = Any(
         config=True,
         help="""
