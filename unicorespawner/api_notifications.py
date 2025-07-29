@@ -2,8 +2,8 @@ import asyncio
 import datetime
 import json
 
+import aiohttp
 import jwt
-import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_pem_x509_certificate
 from jupyterhub.apihandlers import default_handlers
@@ -36,11 +36,14 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
         cert_path = await spawner.get_unicore_cert_path()
         cert_url = await spawner.get_unicore_cert_url()
 
-        with requests.get(
-            cert_url, headers={"accept": "text/plain"}, verify=cert_path
-        ) as r:
-            r.raise_for_status()
-            cert = r.content
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                cert_url,
+                headers={"accept": "text/plain"},
+                ssl=cert_path,  # Use path to a CA bundle file or directory
+            ) as r:
+                r.raise_for_status()
+                cert = await r.read()
 
         # Validate certifica
         cert_obj = load_pem_x509_certificate(cert, default_backend())
