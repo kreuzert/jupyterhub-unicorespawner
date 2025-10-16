@@ -448,16 +448,16 @@ class UnicoreSpawner(ForwardBaseSpawner):
         return f"<details><summary>&nbsp&nbsp&nbsp&nbsp{summary}(click here to expand):</summary>{logs_s}</details>"
 
     def download_file(self, job, file):
-        self.log.info(f"{self._log_name} - Download {file}")
+        self.log.debug(f"{self._log_name} - Download {file}")
         try:
             file_path = job.working_dir.stat(file)
             file_size = file_path.properties["size"]
             if file_size == 0:
-                self.log.info(f"{self._log_name} - Download {file} is empty")
+                self.log.debug(f"{self._log_name} - Download {file} is empty")
                 return f"{file} is empty"
             offset = max(0, file_size - self.download_max_bytes)
             s = file_path.raw(offset=offset)
-            self.log.info(f"{self._log_name} - Download {file} successful")
+            self.log.debug(f"{self._log_name} - Download {file} successful")
             return s.data.decode()
         except:
             self.log.exception(f"{self._log_name} - Could not load file {file}")
