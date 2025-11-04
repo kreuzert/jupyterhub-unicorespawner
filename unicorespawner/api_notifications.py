@@ -14,6 +14,8 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
     def check_xsrf_cookie(self):
         pass
 
+    current_user = None
+
     async def post(self, start_id, user_name, server_name=""):
         user = self.find_user(user_name)
         if user is None:
@@ -22,6 +24,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
         if server_name not in user.spawners:
             self.set_status(404)
             return
+        self.current_user = user
 
         spawner = user.spawners[server_name]
 
