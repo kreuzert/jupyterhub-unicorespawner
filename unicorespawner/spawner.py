@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 
 import pyunicore.client as pyunicore
+import requests
 from forwardbasespawner import ForwardBaseSpawner
 from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_escape_path
@@ -460,7 +461,9 @@ class UnicoreSpawner(ForwardBaseSpawner):
             self.log.debug(f"{self._log_name} - Download {file} successful")
             return s.data.decode()
         except:
-            self.log.exception(f"{self._log_name} - Could not load file {file}")
+            self.log.warning(
+                f"{self._log_name} - Could not load file {file}", exc_info=True
+            )
             return f"{file} does not exist"
 
     async def unicore_stop_event(self):
@@ -478,9 +481,11 @@ class UnicoreSpawner(ForwardBaseSpawner):
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            self.log.exception(f"{self._log_name} - Timeout while downloading stdout")
+            self.log.warning(f"{self._log_name} - Timeout while downloading stdout")
         except:
-            self.log.exception(f"{self._log_name} - Error while downloading stdout")
+            self.log.warning(
+                f"{self._log_name} - Error while downloading stdout", exc_info=True
+            )
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
@@ -655,17 +660,18 @@ class UnicoreSpawner(ForwardBaseSpawner):
                 try:
                     unicore_stderr = await asyncio.wait_for(
                         asyncio.gather(
-                            asyncio.to_thread(self.download_file, job, "stderr")
+                            asyncio.to_thread(self.download_file, unicore_job, "stderr")
                         ),
                         timeout=timeout,
                     )
                 except asyncio.TimeoutError:
-                    self.log.exception(
-                        f"{self._log_name} - Timeout while downloading stdout"
+                    self.log.warning(
+                        f"{self._log_name} - Timeout while downloading stderr"
                     )
                 except:
-                    self.log.exception(
-                        f"{self._log_name} - Error while downloading stdout"
+                    self.log.warning(
+                        f"{self._log_name} - Error while downloading stderr",
+                        exc_info=True,
                     )
 
                 if type(unicore_stderr) == str:
@@ -745,12 +751,12 @@ class UnicoreSpawner(ForwardBaseSpawner):
                     f"{self._log_name} - Resource URL {self.resource_url} not found ({e.response.status_code})"
                 )
                 return 0
-            self.log.exception(
+            self.log.warning(
                 f"{self._log_name} - Could not receive job status. Keep running"
             )
             return None
         except:
-            self.log.exception(
+            self.log.warning(
                 f"{self._log_name} - Could not receive job status. Keep running"
             )
             return None
@@ -779,9 +785,13 @@ class UnicoreSpawner(ForwardBaseSpawner):
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
-            self.log.exception(f"{self._log_name} - Timeout while downloading stdout")
+            self.log.warning(
+                f"{self._log_name} - Timeout while downloading stdout", exc_info=True
+            )
         except:
-            self.log.exception(f"{self._log_name} - Error while downloading stdout")
+            self.log.warning(
+                f"{self._log_name} - Error while downloading stdout", exc_info=True
+            )
 
         self.log.debug(f"{self._log_name} - File download complete")
 
@@ -794,7 +804,16 @@ class UnicoreSpawner(ForwardBaseSpawner):
         self.log.info(
             f"{self._log_name} - Stop job. stderr:\n{self.short_logs(unicore_stderr, 20)}"
         )
-        job.abort()
+        try:
+            job.abort()
+        except:
+            # Handle this as stopped for JupyterHHub, because we cannot do more to stop remote job
+            self.log.warning(f"{self._log_name} - Could not abort job.", exc_info=True)
 
         if self.unicore_job_delete:
-            job.delete()
+            try:
+                job.delete()
+            except:
+                self.log.warning(
+                    f"{self._log_name} - Could not delete job.", exc_info=True
+                )
