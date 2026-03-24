@@ -651,7 +651,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
             unicore_job = await self._get_job()
             while unicore_job.is_running():
                 if unicore_job.properties.get("status", "") != "RUNNING":
-                    self.log.debug(f"{self._log_name} - Wait for JupyterLab ...")
+                    self.log.debug(f"{self._log_name} - Wait for JupyterLab ... (Status: <{unicore_job.properties.get('status', 'unknown')}>)")
                     await asyncio.sleep(5)
                     continue
                 # Download stderr to receive port + address
