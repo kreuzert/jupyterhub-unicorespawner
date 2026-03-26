@@ -697,6 +697,7 @@ class UnicoreSpawner(ForwardBaseSpawner):
                         while unicore_job.is_running():
                             try:
                                 endpoint = unicore_job.links["forwarding"]
+                                self.log.debug(f"{self._log_name} - Start unicore forwarder. Endpoint: {endpoint}, Address: {address}, Port: {port}, Local Port: {self.port}")
                                 tr = unicore_job.transport._clone()
                                 tr.use_security_sessions = False
                                 self.forwarder = Forwarder(
