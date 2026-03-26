@@ -51,7 +51,7 @@ profile = "black"
 github_url = "https://github.com/kreuzert/jupyterhub-unicorespawner"
 
 [tool.tbump.version]
-current = "2.1.2"
+current = "2.1.3"
 regex = '''
   (?P<major>\d+)
   \.
