@@ -9,6 +9,7 @@ import pyunicore.client as pyunicore
 import requests
 from forwardbasespawner import ForwardBaseSpawner
 from jupyterhub.utils import maybe_future
+from jupyterhub.utils import random_port
 from jupyterhub.utils import url_escape_path
 from jupyterhub.utils import url_path_join
 from pyunicore.forwarder import Forwarder
@@ -651,7 +652,9 @@ class UnicoreSpawner(ForwardBaseSpawner):
             unicore_job = await self._get_job()
             while unicore_job.is_running():
                 if unicore_job.properties.get("status", "") != "RUNNING":
-                    self.log.debug(f"{self._log_name} - Wait for JupyterLab ... (Status: <{unicore_job.properties.get('status', 'unknown')}>)")
+                    self.log.debug(
+                        f"{self._log_name} - Wait for JupyterLab ... (Status: <{unicore_job.properties.get('status', 'unknown')}>)"
+                    )
                     await asyncio.sleep(5)
                     continue
                 # Download stderr to receive port + address
@@ -706,9 +709,13 @@ class UnicoreSpawner(ForwardBaseSpawner):
                                 self.forwarder.run(self.port)
                             except:
                                 self.log.exception(
-                                    f"{self._log_name} - Could not start unicore forward"
+                                    f"{self._log_name} - Could not start unicore forward with port {self.port}. Try to start with a new random port."
                                 )
-                                time.sleep(2)
+                                self.custom_port = random_port()
+                                self.log.info(
+                                    f"{self._log_name} - Try to forward with new port {self.custom_port}."
+                                )
+                                time.sleep(1)
 
                     self.unicore_forwarder = loop.run_in_executor(None, run_forward)
                     self.log.info(
