@@ -604,7 +604,10 @@ class UnicoreSpawner(ForwardBaseSpawner):
             for key, value in (
                 additional_replacements.get(ukey, {}).get(uvalue, {}).items()
             ):
-                job_description = job_description.replace(f"<{key}>", value)
+                try:
+                    job_description = job_description.replace(f"<{key}>", value)
+                except:
+                    self.log.error(f"{self._log_name} - Could not replace {key} with {value}")
         job_description = json.loads(job_description)
 
         jd_env = job_description.get("Environment", {}).copy()
