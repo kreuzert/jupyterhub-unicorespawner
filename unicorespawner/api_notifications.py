@@ -26,7 +26,7 @@ class SpawnEventsUnicoreAPIHandler(APIHandler):
             return
         self.current_user = user
 
-        spawner = user.spawners[server_name]
+        spawner = user.get_or_create_spawner(server_name, server_name)
 
         if spawner.start_id and spawner.start_id != start_id:
             # If the spawner has currently a start_id and it's different, then we don't forward the given update

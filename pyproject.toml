@@ -23,7 +23,7 @@ dependencies = [
     "aiohttp",
     "escapism",
     "jinja2",
-    "jupyterhub>=5.0.0",
+    "jupyterhub>=6.0.0",
     "traitlets",
     "urllib3",
     "jupyterhub-forwardbasespawner>=2.0.0",
