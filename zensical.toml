@@ -1,0 +1,97 @@
+[project]
+site_name = "UNICORESpawner"
+site_url = "https://kreuzert.github.io/jupyterhub-unicorespawner/"
+site_description = "UNICORESpawner - a JupyterHub Spawner to start services on UNICORE-connected systems"
+copyright = "&copy; 2023 Forschungszentrum Juelich GmbH"
+
+# The repository is managed on GitLab (the GitHub repo is a read-only
+# mirror), so the repository and edit links point to the self-hosted
+# GitLab instance.
+repo_url = "https://gitlab.jsc.fz-juelich.de/jupyterjsc/packages/jupyterhub-unicorespawner"
+repo_name = "jupyterjsc/packages/jupyterhub-unicorespawner"
+edit_uri = "-/edit/main/docs/"
+
+# LICENSE and CHANGELOG (one level above docs_dir) are included via
+# pymdownx.snippets
+watch = ["LICENSE", "CHANGELOG.md"]
+
+nav = [
+  { "UNICORESpawner" = "spawners/unicorespawner.md" },
+  { "API Endpoints" = "apiendpoints.md" },
+  { "Changelog" = "changelog.md" },
+]
+
+[project.theme]
+variant = "classic"
+language = "en"
+features = [
+  "announce.dismiss",
+  "content.action.edit",
+  "content.action.view",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.code.select",
+  "content.footnote.tooltips",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[project.theme.icon]
+repo = "fontawesome/brands/gitlab"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.arithmatex.generic = true
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.snippets.base_path = ["docs", "."]
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true
+pymdownx.tilde = {}

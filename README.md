@@ -1,10 +1,14 @@
 
-[![Documentation Status](https://readthedocs.org/projects/jupyterhub-unicorespawner/badge/?version=latest)](https://jupyterhub-unicorespawner.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://kreuzert.github.io/jupyterhub-unicorespawner/)
 
 # UNICORESpawner
 
 The UNICORESpawner enables JupyterHub to spawn services via [UNICORE](https://www.unicore.eu).
 It is a subclass of the [JupyterHub ForwardBaseSpawner](https://github.com/kreuzert/jupyterhub-forwardbasespawner).
+
+## Documentation
+
+Link to [documentation](https://kreuzert.github.io/jupyterhub-unicorespawner/).
 
 ## Features
 

@@ -1,4 +1,3 @@
-```{eval-rst}
-.. include:: ../CHANGELOG.md
-   :parser: myst_parser.sphinx_
-```
+# Changelog
+
+--8<-- "CHANGELOG.md"
