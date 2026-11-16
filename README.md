@@ -1,4 +1,3 @@
-
 [![Documentation Status](https://github.com/kreuzert/jupyterhub-unicorespawner/actions/workflows/docs.yml/badge.svg)](https://kreuzert.github.io/jupyterhub-unicorespawner/)
 
 # UNICORESpawner
